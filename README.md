@@ -1,4 +1,4 @@
-##Weekly-Planner
+## Weekly-Planner
 this is a totally FUNCTIONAL to do list web application using:
 -next js
 -prisma
