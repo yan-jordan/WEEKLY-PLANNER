@@ -1,0 +1,42 @@
+@import "tailwindcss";
+
+/* Light mode (default) */
+:root {
+  --background: #F6F8FC;
+  --foreground: #1F2937;
+
+  --primary: #6C8CF5;
+  --secondary: #8ED1C2;
+  --accent: #F5C96A;
+  --surface: #FFFFFF;
+}
+
+/* Tailwind theme inline */
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+
+  --color-primary: var(--primary);
+  --color-secondary: var(--secondary);
+  --color-accent: var(--accent);
+  --color-surface: var(--surface);
+}
+
+/* Dark mode */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --background: #0f172a;
+    --foreground: #f1f5f9;
+
+    --primary: #8fa6f8;
+    --secondary: #aee9d8;
+    --accent: #ffe08a;
+    --surface: #1e293b;
+  }
+}
+
+/* Default body styles */
+body {
+  background: var(--foreground);
+  color: var(--background);
+}
