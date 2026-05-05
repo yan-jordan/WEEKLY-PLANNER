@@ -1,3 +1,19 @@
+##Weekly-Planner
+this is a totally FUNCTIONAL to do list web application using:
+-next js
+-prisma
+-mySql
+-tailwind CSS
+<img width="3024" height="1664" alt="Screenshot 1405-01-18 at 01 24 01" src="https://github.com/user-attachments/assets/5ac8bafa-3ea2-4e59-b4ae-cff7a2007ec8" />
+<br/>
+<img width="3023" height="1651" alt="Image 1-18-1405 AP at 01 28" src="https://github.com/user-attachments/assets/eaecad89-c567-4442-958d-a73efb0cbf8f" />
+<br/>
+<img width="3022" height="1651" alt="Image 1-18-1405 AP at 03 13" src="https://github.com/user-attachments/assets/34f18562-7147-4b89-ac5a-5902199ca167" />
+<br/>
+<img width="3023" height="1651" alt="Screenshot 1405-01-18 at 01 37 01" src="https://github.com/user-attachments/assets/73025194-10a9-463c-aa9e-09b01171a921" />
+<br/>
+<img width="3024" height="1654" alt="Screenshot 1405-01-18 at 01 37 41" src="https://github.com/user-attachments/assets/62667c3b-e0ef-4102-b2ae-1c0d5c191d6e" />
+<br/>
 This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
 
 ## Getting Started
