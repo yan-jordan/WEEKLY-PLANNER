@@ -30,8 +30,7 @@ export async function authenticate(input: z.infer<typeof loginSchema>): Promise<
   const user = await db.user.findUnique({ where: { email: input.email } });
   const ok = await verifyPassword(input.password, user?.passwordHash ?? (await getDummyHash()));
   if (!user || !ok) throw new ApiError(401, "invalid_credentials", "Invalid email or password.");
-  const { passwordHash: _omit, ...rest } = user;
-  return rest;
+  return { id: user.id, email: user.email, name: user.name, availability: user.availability, createdAt: user.createdAt };
 }
 
 export async function getUser(userId: string): Promise<PublicUser> {
