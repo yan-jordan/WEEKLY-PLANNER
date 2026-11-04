@@ -165,3 +165,21 @@ describe("plan", () => {
     void b;
   });
 });
+
+describe("plan modes", () => {
+  it("fill keeps tasks you already scheduled and plans around them; rebalance re-plans everything", async () => {
+    const { POST: propose } = await import("@/app/api/plan/route");
+    const cookie = await signUp();
+    const week = "2099-01-05";
+    await me.PATCH(jsonRequest("/api/me", "PATCH", { availability: [4, 4, 0, 0, 0, 0, 0] }, cookie));
+    const pinned = await addTask(cookie, { week, title: "Pinned", hours: 3, complexity: 2, day: 0 });
+    const loose = await addTask(cookie, { week, title: "Loose", hours: 3, complexity: 5 });
+
+    const fill = (await (await propose(jsonRequest("/api/plan", "POST", { week }, cookie))).json()).plan;
+    expect(fill.mode).toBe("fill");
+    expect(fill.assignments).toEqual([{ taskId: loose.id, day: 1 }]); // Monday only has 1h left
+
+    const all = (await (await propose(jsonRequest("/api/plan", "POST", { week, mode: "rebalance" }, cookie))).json()).plan;
+    expect(all.assignments.map((a: { taskId: string }) => a.taskId).sort()).toEqual([pinned.id, loose.id].sort());
+  });
+});

@@ -22,7 +22,11 @@ function rulesSummary(input: PlanInput, plan: Plan["assignments"]): string {
 export async function makePlan(input: PlanInput, llm: LlmConfig | null, fetchImpl?: typeof fetch): Promise<Plan> {
   const rules = (): Plan["assignments"] => greedyPlan(input);
 
-  if (llm && input.tasks.length > 0) {
+  if (input.tasks.length === 0) {
+    return { assignments: [], source: "rules", summary: "Everything is already scheduled. Use Rebalance to re-plan the whole week." };
+  }
+
+  if (llm) {
     try {
       const result = await llmPlan(input, llm, fetchImpl);
       const { violations } = evaluatePlan(input, result.assignments);

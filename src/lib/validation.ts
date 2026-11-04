@@ -66,7 +66,15 @@ export const availabilitySchema = z
   })
   .strict();
 
-export const planRequestSchema = z.object({ week: weekParam.optional() }).strict();
+export const planModes = ["fill", "rebalance"] as const;
+
+export const planRequestSchema = z
+  .object({
+    week: weekParam.optional(),
+    /** fill: only place unscheduled (or overdue) tasks around what's already planned. rebalance: re-plan every open task. */
+    mode: z.enum(planModes).default("fill"),
+  })
+  .strict();
 
 export const applyPlanSchema = z
   .object({

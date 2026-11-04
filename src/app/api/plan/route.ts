@@ -8,6 +8,6 @@ import { proposePlan } from "@/server/plan";
 export const POST = route(async (req: Request) => {
   const userId = await requireUserId(req);
   const text = await req.text();
-  const { week } = planRequestSchema.parse(text ? JSON.parse(text) : {});
-  return NextResponse.json({ plan: await proposePlan(userId, week) });
+  const { week, mode } = planRequestSchema.parse(text ? JSON.parse(text) : {});
+  return NextResponse.json({ plan: await proposePlan(userId, week, mode) });
 });
