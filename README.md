@@ -126,7 +126,7 @@ CI runs migrations, checks they match the Prisma schema, then lint, typecheck, t
 
 ## Deploying
 
-Works on Vercel with any hosted Postgres (Neon, Supabase). Set `DATABASE_URL`, `SESSION_SECRET` and optionally the `LLM_*` variables. The `vercel-build` script applies pending migrations before building.
+Works on Vercel with any hosted Postgres (Neon, Supabase). Set `DATABASE_URL`, `SESSION_SECRET` and optionally the `LLM_*` variables. The `vercel-build` script applies pending migrations before building, so use the database's direct (non-pooled) connection string for `DATABASE_URL`.
 
 ## Known limitations
 
