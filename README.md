@@ -1,52 +1,135 @@
-## Weekly-Planner
-this is a totally FUNCTIONAL to do list web application using:
--next js
--prisma
--mySql
--tailwind CSS
-<img width="3024" height="1664" alt="Screenshot 1405-01-18 at 01 24 01" src="https://github.com/user-attachments/assets/5ac8bafa-3ea2-4e59-b4ae-cff7a2007ec8" />
-<br/>
-<img width="3023" height="1651" alt="Image 1-18-1405 AP at 01 28" src="https://github.com/user-attachments/assets/eaecad89-c567-4442-958d-a73efb0cbf8f" />
-<br/>
-<img width="3022" height="1651" alt="Image 1-18-1405 AP at 03 13" src="https://github.com/user-attachments/assets/34f18562-7147-4b89-ac5a-5902199ca167" />
-<br/>
-<img width="3023" height="1651" alt="Screenshot 1405-01-18 at 01 37 01" src="https://github.com/user-attachments/assets/73025194-10a9-463c-aa9e-09b01171a921" />
-<br/>
-<img width="3024" height="1654" alt="Screenshot 1405-01-18 at 01 37 41" src="https://github.com/user-attachments/assets/62667c3b-e0ef-4102-b2ae-1c0d5c191d6e" />
-<br/>
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Chinesh — weekly planner
 
-## Getting Started
+Plan your week around the hours you actually have. You set how many hours each weekday really has, add tasks with an estimate and a difficulty, and the app fits them into the week without overbooking a day. An optional LLM planner proposes the schedule, but its output is validated against the same hard rules as the built-in scheduler before you ever see it.
 
-First, run the development server:
+![Weekly board](docs/screenshots/week-planned.png)
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+**Stack:** Next.js 16 (App Router, route handlers) · TypeScript · PostgreSQL · Prisma 7 · Zod · Tailwind CSS 4 · Vitest · GitHub Actions
+
+## Features
+
+- **Accounts** — signup and login with bcrypt-hashed passwords and a signed, httpOnly session cookie. Every query is scoped to the logged-in user.
+- **Weekly board** — each day is ruled one line per available hour and tasks are drawn as tall as their estimate, so a full or overbooked day is obvious at a glance.
+- **Plan my week** — places unscheduled tasks (or re-plans the whole week) and shows a preview of every change before anything is saved.
+- **LLM planning with guardrails** — any OpenAI-compatible API (OpenAI, OpenRouter, Groq, local Ollama). Invalid or rule-breaking answers fall back to the deterministic scheduler.
+- **Insights** — planned vs finished hours per week and how far off your estimates are for each difficulty level, computed in SQL.
+- Light and dark mode, keyboard accessible, works from phone to desktop.
+
+| Plan preview | Insights | Mobile, dark |
+| --- | --- | --- |
+| ![Plan preview](docs/screenshots/plan.png) | ![Insights](docs/screenshots/insights.png) | ![Mobile dark mode](docs/screenshots/mobile-dark.png) |
+
+## How planning works
+
+```
+open tasks + hours left per day
+        │
+        ▼
+LLM configured? ── no ──────────────────────────────────► greedyPlan()   source: "rules"
+        │ yes
+        ▼
+ask model for JSON ─► parse with Zod ─► evaluatePlan()
+        │                  │                 │
+   timeout / HTTP     malformed         any violation ──► greedyPlan()   source: "fallback"
+   error ─────────────────┴──────────────────┘
+                                             │ none
+                                             ▼
+                                        LLM plan        source: "llm"
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+- **`greedyPlan`** (`src/lib/planner/greedy.ts`) places the hardest, longest tasks first, each on the open day with the most free hours, with a penalty for days that already carry hard work. Tasks that fit nowhere stay unscheduled instead of overbooking a day. It is deterministic, so it is easy to test.
+- **`evaluatePlan`** (`src/lib/planner/evaluate.ts`) checks the hard rules (no overbooked days, no past days, every task exactly once, no unknown ids) and scores balance. Any plan, from any source, has to pass it.
+- **Two modes.** *Fill* keeps tasks you already put on a day and plans around them. *Rebalance* re-plans every open task.
+- **Nothing is saved until you apply it.** `POST /api/plan` returns a preview; `POST /api/plan/apply` writes all assignments in one transaction and rejects the whole batch if any task isn't yours.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+`npm run eval:planner` runs both planners on fixed scenarios and prints a comparison:
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+```
+┌─────────────────────┬─────────┬────────────┬───────────┬───────────┬────────────────┐
+│ scenario            │ planner │ violations │ scheduled │ imbalance │ peakComplexity │
+├─────────────────────┼─────────┼────────────┼───────────┼───────────┼────────────────┤
+│ 'light week'        │ 'rules' │ 0          │ '5/5h'    │ 0.175     │ 3              │
+│ 'exam week (tight)' │ 'rules' │ 0          │ '22/22h'  │ 0.219     │ 5              │
+│ 'overbooked'        │ 'rules' │ 0          │ '15/18h'  │ 0         │ 5              │
+│ 'mid-week start'    │ 'rules' │ 0          │ '12/12h'  │ 0.177     │ 4              │
+└─────────────────────┴─────────┴────────────┴───────────┴───────────┴────────────────┘
+```
 
-## Learn More
+## API
 
-To learn more about Next.js, take a look at the following resources:
+All endpoints return JSON. Errors have one shape: `{ "error": { "code", "message", "details"? } }`.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+| Method | Path | Description |
+| --- | --- | --- |
+| `POST` | `/api/auth/signup` | Create an account and start a session |
+| `POST` | `/api/auth/login` | Start a session |
+| `POST` | `/api/auth/logout` | End the session |
+| `GET` / `PATCH` | `/api/me` | Profile / update hours available per weekday |
+| `GET` | `/api/tasks?week=YYYY-MM-DD` | Tasks for a week (any date resolves to its Monday) |
+| `POST` | `/api/tasks` | Create a task |
+| `PATCH` / `DELETE` | `/api/tasks/:id` | Update (title, hours, complexity, day, done, actualHours) / delete |
+| `POST` | `/api/plan` | Preview a plan: `{ week?, mode?: "fill" \| "rebalance" }` |
+| `POST` | `/api/plan/apply` | Save a plan atomically |
+| `GET` | `/api/insights?weeks=8` | Completion trend and estimate accuracy |
+| `GET` | `/api/health` | Liveness and database check |
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+Design notes:
 
-## Deploy on Vercel
+- **Validation at the edge.** Every body and query goes through a strict Zod schema; unknown fields are rejected rather than ignored, so a client can't sneak in a `userId`.
+- **Ownership checks return 404, not 403**, so task ids can't be probed across accounts.
+- **Login doesn't leak which emails exist** — unknown email and wrong password produce the same response and comparable timing (a bcrypt comparison runs either way).
+- **Rules live in the database too.** Hours, difficulty and day ranges are `CHECK` constraints in the migration, not just in the API.
+- **Insights are aggregated in SQL** (`FILTER`, `generate_series` so empty weeks still appear) instead of loading every task into Node.
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## Project structure
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+```
+prisma/
+  schema.prisma          User and Task models
+  migrations/            SQL migrations (with CHECK constraints)
+  seed.ts                demo account with 6 weeks of history
+src/
+  app/api/               route handlers: parse input, call a service, return JSON
+  app/(auth)/            login and signup pages
+  app/(app)/             signed-in pages: week board, insights, settings
+  server/                services: all database access, always scoped by user id
+  lib/planner/           greedy scheduler, plan evaluator, LLM client
+  lib/auth/              password hashing and session tokens
+  lib/validation.ts      Zod schemas for every request
+tests/                   Vitest: unit tests + API tests against a real Postgres
+scripts/eval-planner.ts  planner comparison
+```
+
+## Running locally
+
+Requirements: Node 22+ and Docker (or any PostgreSQL 16).
+
+```bash
+cp .env.example .env          # then set SESSION_SECRET (openssl rand -base64 32)
+docker compose up -d          # Postgres with "planner" and "planner_test" databases
+npm install                   # also generates the Prisma client
+npm run db:deploy             # apply migrations
+npm run db:seed               # optional: demo@chinesh.app / demo-password
+npm run dev                   # http://localhost:3000
+```
+
+To enable LLM planning, set `LLM_BASE_URL`, `LLM_API_KEY` and `LLM_MODEL` in `.env`. Without them the app uses the built-in scheduler.
+
+| Script | What it does |
+| --- | --- |
+| `npm test` | Unit and API tests (uses `TEST_DATABASE_URL`, which it wipes) |
+| `npm run lint` / `npm run typecheck` | ESLint / TypeScript |
+| `npm run eval:planner` | Compare planners on fixed scenarios |
+| `npm run db:migrate` | Create a new migration after changing the schema |
+
+CI runs migrations, checks they match the Prisma schema, then lint, typecheck, tests and a production build on every push and pull request.
+
+## Deploying
+
+Works on Vercel with any hosted Postgres (Neon, Supabase). Set `DATABASE_URL`, `SESSION_SECRET` and optionally the `LLM_*` variables. The `vercel-build` script applies pending migrations before building.
+
+## Known limitations
+
+- Login has no rate limiting yet. On serverless an in-memory limiter wouldn't hold across instances; the right fix is a shared store such as Redis.
+- Weeks are computed in UTC, so "today" can be off by a few hours near midnight in time zones far from UTC.
+- Sessions are stateless JWTs, so logging out clears the cookie but a copied token stays valid until it expires (7 days).
