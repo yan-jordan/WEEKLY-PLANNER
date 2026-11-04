@@ -4,11 +4,11 @@ import { getCurrentUserId } from "@/lib/auth/current-user";
 
 /** A static sample week for the landing page, drawn the same way as the real board. */
 const SAMPLE = [
-  { day: "Mon", capacity: 4, tasks: [{ t: "Thesis chapter", h: 3, hard: true }, { t: "Gym", h: 1 }] },
-  { day: "Tue", capacity: 4, tasks: [{ t: "Algorithms HW", h: 3, hard: true }] },
-  { day: "Wed", capacity: 4, tasks: [{ t: "Read paper", h: 2 }, { t: "Groceries", h: 1 }] },
-  { day: "Thu", capacity: 4, tasks: [{ t: "Slides", h: 2 }, { t: "Lab report", h: 2 }] },
-  { day: "Fri", capacity: 4, tasks: [{ t: "Mock exam", h: 3, hard: true }] },
+  { day: "Mon", capacity: 4, tasks: [{ t: "Thesis", h: 3, hard: true }, { t: "Gym", h: 1 }] },
+  { day: "Tue", capacity: 4, tasks: [{ t: "Exam prep", h: 3, hard: true }] },
+  { day: "Wed", capacity: 4, tasks: [{ t: "Reading", h: 2 }, { t: "Errands", h: 1 }] },
+  { day: "Thu", capacity: 4, tasks: [{ t: "Slides", h: 2 }, { t: "Lab", h: 2 }] },
+  { day: "Fri", capacity: 4, tasks: [{ t: "Project", h: 3, hard: true }] },
   { day: "Sat", capacity: 2, tasks: [{ t: "Laundry", h: 1 }] },
   { day: "Sun", capacity: 2, tasks: [] },
 ];
@@ -50,7 +50,7 @@ export default async function Home() {
                 <div className="hour-ruled p-1 [--hour:2.25rem]" style={{ minHeight: `calc(4 * var(--hour) + 0.5rem)` }}>
                   {d.tasks.map((task) => (
                     <div key={task.t} className="p-0.5" style={{ height: `calc(${task.h} * var(--hour))` }}>
-                      <div className={`h-full rounded-md border bg-surface px-1.5 py-1 text-xs font-bold leading-tight ${task.hard ? "border-hard/60" : "border-line"}`}>
+                      <div className={`h-full overflow-hidden rounded-md border bg-surface px-1.5 py-1 text-xs font-bold leading-tight ${task.hard ? "border-hard/60" : "border-line"}`}>
                         {task.t}
                       </div>
                     </div>
