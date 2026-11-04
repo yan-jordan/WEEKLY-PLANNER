@@ -1,16 +1,42 @@
 generator client {
-  provider = "prisma-client-js"
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
 }
 
 datasource db {
-  provider = "mysql"
-  url      = env("DATABASE_URL")
+  provider = "postgresql"
+}
+
+model User {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  name         String?
+  passwordHash String
+  /// Hours available per weekday, Monday first (index 0) to Sunday (index 6).
+  availability Int[]    @default([4, 4, 4, 4, 4, 2, 2])
+  createdAt    DateTime @default(now())
+  tasks        Task[]
 }
 
 model Task {
-  id          Int     @id @default(autoincrement())
-  task_name   String
-  time_needed Int
+  id          String    @id @default(cuid())
+  userId      String
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  title       String    @db.VarChar(120)
+  /// Estimated effort in hours.
+  hours       Int
+  /// 1 (trivial) to 5 (hard).
   complexity  Int
-  check       Boolean
+  /// Monday (UTC midnight) of the week this task belongs to.
+  weekStart   DateTime  @db.Date
+  /// 0 = Monday ... 6 = Sunday. Null means unscheduled (backlog for that week).
+  day         Int?
+  /// Hours it actually took, recorded when the task is completed (optional).
+  actualHours Int?
+  done        Boolean   @default(false)
+  completedAt DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@index([userId, weekStart])
 }
