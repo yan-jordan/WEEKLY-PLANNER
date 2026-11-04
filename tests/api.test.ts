@@ -135,3 +135,33 @@ describe("profile", () => {
     expect(bad.status).toBe(400);
   });
 });
+
+describe("plan", () => {
+  it("proposes a plan without saving it, then applies it atomically", async () => {
+    const { POST: propose } = await import("@/app/api/plan/route");
+    const { POST: apply } = await import("@/app/api/plan/apply/route");
+    const cookie = await signUp();
+    const week = "2099-01-05"; // a future week, so every day is still open
+    const a = await addTask(cookie, { week, hours: 3, complexity: 5 });
+    const b = await addTask(cookie, { week, hours: 2, complexity: 2 });
+
+    const res = await propose(jsonRequest("/api/plan", "POST", { week }, cookie));
+    const { plan } = await res.json();
+    expect(plan.source).toBe("rules");
+    expect(plan.assignments).toHaveLength(2);
+    expect(await db.task.count({ where: { day: { not: null } } })).toBe(0); // preview only
+
+    expect((await apply(jsonRequest("/api/plan/apply", "POST", { week, assignments: plan.assignments }, cookie))).status).toBe(204);
+    expect(await db.task.count({ where: { day: { not: null } } })).toBe(2);
+
+    // One foreign id makes the whole apply fail and change nothing.
+    const other = await signUp("other@example.com");
+    const foreign = await addTask(other, { week });
+    const bad = await apply(
+      jsonRequest("/api/plan/apply", "POST", { week, assignments: [{ taskId: a.id, day: 6 }, { taskId: foreign.id, day: 6 }] }, cookie),
+    );
+    expect(bad.status).toBe(404);
+    expect((await db.task.findUniqueOrThrow({ where: { id: a.id } })).day).not.toBe(6);
+    void b;
+  });
+});
