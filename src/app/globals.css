@@ -1,42 +1,87 @@
 @import "tailwindcss";
 
-/* Light mode (default) */
 :root {
-  --background: #F6F8FC;
-  --foreground: #1F2937;
-
-  --primary: #6C8CF5;
-  --secondary: #8ED1C2;
-  --accent: #F5C96A;
-  --surface: #FFFFFF;
+  --paper: #f2f4f8;
+  --surface: #ffffff;
+  --ink: #1a2233;
+  --muted: #5e6a7e;
+  --line: #d9dfe8;
+  --brand: #4f6fe8;
+  --brand-ink: #ffffff;
+  --done: #3fa98c;
+  --done-soft: #dcf2ec;
+  --hard: #d8962b;
+  --hard-soft: #fbefd9;
+  --danger: #c8443a;
+  color-scheme: light;
 }
 
-/* Tailwind theme inline */
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-
-  --color-primary: var(--primary);
-  --color-secondary: var(--secondary);
-  --color-accent: var(--accent);
-  --color-surface: var(--surface);
-}
-
-/* Dark mode */
 @media (prefers-color-scheme: dark) {
   :root {
-    --background: #0f172a;
-    --foreground: #f1f5f9;
-
-    --primary: #8fa6f8;
-    --secondary: #aee9d8;
-    --accent: #ffe08a;
-    --surface: #1e293b;
+    --paper: #0f1522;
+    --surface: #172033;
+    --ink: #e7ebf3;
+    --muted: #93a0b5;
+    --line: #263149;
+    --brand: #7d97f5;
+    --brand-ink: #0f1522;
+    --done: #5dc5a8;
+    --done-soft: #17362f;
+    --hard: #e9b45a;
+    --hard-soft: #3a2d15;
+    --danger: #ec7d73;
+    color-scheme: dark;
   }
 }
 
-/* Default body styles */
+@theme inline {
+  --color-paper: var(--paper);
+  --color-surface: var(--surface);
+  --color-ink: var(--ink);
+  --color-muted: var(--muted);
+  --color-line: var(--line);
+  --color-brand: var(--brand);
+  --color-brand-ink: var(--brand-ink);
+  --color-done: var(--done);
+  --color-done-soft: var(--done-soft);
+  --color-hard: var(--hard);
+  --color-hard-soft: var(--hard-soft);
+  --color-danger: var(--danger);
+  --font-display: "Bricolage Grotesque Variable", ui-sans-serif, system-ui, sans-serif;
+  --font-sans: "Atkinson Hyperlegible", ui-sans-serif, system-ui, sans-serif;
+}
+
 body {
-  background: var(--foreground);
-  color: var(--background);
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--font-sans);
+  line-height: 1.5;
+}
+
+:focus-visible {
+  outline: 2px solid var(--brand);
+  outline-offset: 2px;
+}
+
+/* One hour of a day's capacity is drawn as one ruled line. */
+.hour-ruled {
+  --hour: 2.75rem;
+  background-image: repeating-linear-gradient(to bottom, transparent 0 calc(var(--hour) - 1px), var(--line) calc(var(--hour) - 1px) var(--hour));
+}
+
+.overflow-hatch {
+  background-image: repeating-linear-gradient(-45deg, var(--hard-soft) 0 6px, transparent 6px 12px);
+}
+
+dialog::backdrop {
+  background: rgb(15 21 34 / 0.45);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+  }
 }
